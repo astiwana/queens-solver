@@ -55,7 +55,7 @@ for i in range(5):
 
 print(grid)
 
-# SOLVE HERE
+# SOLVE
 
 solve_grid = [['-' for i in range(5)] for j in range(5)]
 
