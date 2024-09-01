@@ -1,62 +1,103 @@
 import cv2
 import numpy as np
 
-img = cv2.imread('test_file.png')
-img = cv2.resize(img, (0,0), fx=0.75, fy=0.75)
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def get_corners(image, n):
+    
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-corners = cv2.goodFeaturesToTrack(gray, 100, 0.01, 10)
-corners = np.int0(corners)
-                  
-#print(corners)
-corners = np.ndarray.tolist(corners)
+    all_corners = cv2.goodFeaturesToTrack(gray, 100, 0.01, 10)
+    all_corners = np.intp(all_corners)             
+    all_corners = np.ndarray.tolist(all_corners)
 
-proper_corners = []
-n = 6
+    filtered_corners = []
+    for i in range(len(all_corners)):
+        filtered_corners.append([all_corners[i][0][0], all_corners[i][0][1]])
+    filtered_corners = sorted(filtered_corners, key=lambda x: (x[1], x[0]), reverse=True)
+    for i in range(len(filtered_corners)):
+        if i % (n + 1) != 0:
+            filtered_corners[i][1] = filtered_corners[i-1][1]
 
-for i in range(len(corners)):
-    proper_corners.append([corners[i][0][0], corners[i][0][1]])
+    filtered_corners = sorted(filtered_corners, key=lambda x: (x[1], x[0]), reverse=True)
+    grid_corners = [filtered_corners[i] for i in range(len(filtered_corners) - (n+1)) if i % (n+1) != n]
+    grid_corners = sorted(grid_corners, key=lambda x: (x[1], x[0]))
+    return grid_corners
 
-proper_corners = sorted(proper_corners, key=lambda x: (x[1], x[0]), reverse=True)
+def create_grid_and_color_map(image, corners, n):
 
-for i in range(len(proper_corners)):
-    if i % 6 != 0:
-        proper_corners[i][1] = proper_corners[i-1][1]
+    grid = [[i for i in range(n)] for j in range(n)]
+    color_count = {}
+    
+    k = 0
+    for i in range(n):
+        for j in range(n):
+            coord = [corners[k][0] - 23, corners[k][1] - 23]
+            grid[j][i] =  image[coord[0], coord[1]] # B G R FORMAT
+            if tuple(image[coord[0], coord[1]]) not in color_count:
+                color_count[tuple(image[coord[0], coord[1]])] = 0
+            k += 1
 
-sorted_list = sorted(proper_corners, key=lambda x: (x[1], x[0]), reverse=True)
+    return (grid, color_count)
 
-new_corners = [sorted_list[i] for i in range(len(sorted_list) - 6) if i % 6 != 5]
+def valid(output_grid, grid, row, col, color_map, n):
 
-new_corners = sorted(new_corners, key=lambda x: (x[1], x[0]))
+    # Check row
+    for i in range(len(output_grid[0])):
+        if output_grid[row][i] == '👑' and col != i:
+            return False
+    
+    # Check col
+    for i in range(len(output_grid)):
+        if output_grid[i][col] == '👑' and row != i:
+            return False
+    
+    # Check neighbours 
+    if row > 0 and col > 0 and output_grid[row - 1][col - 1] == '👑':
+        return False
+    if row > 0 and col < n - 1 and output_grid[row - 1][col + 1] == '👑':
+        return False
+    if row < n - 1 and col > 0 and output_grid[row + 1][col - 1] == '👑':
+        return False
+    if row < n - 1 and col < n - 1 and output_grid[row + 1][col + 1] == '👑':
+        return False
+    
+    # Check colour
+    if color_map[tuple(grid[row][col])] > 0:
+        return False
+    
+    return True # valid position
 
-print(new_corners)
-print(len(new_corners))
+def solve(output_grid, row, grid, color_map, n):
+    
+    if row >= n:
+        return True
+    else:
 
+        for col in range(n):
+            if valid(output_grid, grid, row, col, color_map, n):
+                output_grid[row][col] = '👑'
+                color_map[tuple(grid[row][col])] += 1
+                if solve(output_grid, row + 1, grid, color_map, n):
+                    return True
+                
+                output_grid[row][col] = '-'
+                color_map[tuple(grid[row][col])] -= 1
+        
+    return False
 
-#cv2.imshow('Frame', img)
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
+def main():
 
-
-# CREATE GRID NOW 
-
-grid = [[i for i in range(5)] for j in range(5)]
-hashmap = {}
-k = 0
-for i in range(5):
-    for j in range(5):
-        coord = [new_corners[k][0] - 30, new_corners[k][1] - 30]
-        grid[j][i] =  img[coord[0], coord[1]] # B G R FORMAT
-        #print(coord)
-        #print(img[coord[0], coord[1]])
-        if tuple(img[coord[0], coord[1]]) not in hashmap:
-            hashmap[tuple(img[coord[0], coord[1]])] = 0
-        k += 1
-
-print(grid)
-
-# SOLVE
-
-solve_grid = [['-' for i in range(5)] for j in range(5)]
-
-print(solve_grid)
+    file_name = input("Enter file name: ")
+    size = int(input("Enter size of grid (number of rows): "))
+    image = cv2.imread(file_name)
+    image = cv2.resize(image, (0,0), fx=0.75, fy=0.75)
+    corners = get_corners(image, size)
+    output_grid = [['-' for i in range(size)] for j in range(size)]
+    grid, color_map = create_grid_and_color_map(image, corners, size)
+    solve(output_grid, 0, grid, color_map, size)
+    print("Solution:\n\n")
+    for row in output_grid:
+        print(*row)
+    print("\n\n")
+    
+if __name__ == '__main__':
+    main()
