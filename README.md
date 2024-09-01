@@ -6,8 +6,6 @@ A simple Python script that solves the [Queens](https://www.linkedin.com/games/q
 
 Take a screenshot of the grid and save it in the same directory as the script. Execute the script, and when prompted enter the name of the screenshot file and the size of the grid. The script will do its magic and the solved game output will be displayed.
 
-## Demo Video
-
 ## Contributing 
 
 To contribute to this repository, feel free to make a pull request and I will try my best to review it soon.
