@@ -1,6 +1,6 @@
 # Queens LinkedIn Game Solver
 
-A simple Python script that solves the [Queens](https://www.linkedin.com/games/queens) game on LinkedIn. This also works for games like [Crowns](https://gameofcrowns.sanish.me/). It uses OpenCV to detect and create the game grid, then solves it using backtracking.
+A simple Python script that solves the [Queens](https://www.linkedin.com/games/queens) game on LinkedIn. This also works for games like [Crowns](https://gameofcrowns.sanish.me/). It uses OpenCV to detect and create the game grid and then solves it using backtracking.
 
 ## Usage
 
